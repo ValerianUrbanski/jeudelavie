@@ -26,7 +26,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public class Frame extends Application{
-	private int size = 700;
+	private int size = 500;
 	private int scale = 10;
 	private Cells[][] lstPane = new Cells[size][size];
 	private List<Cells> lstCells = new ArrayList<Cells>();
@@ -50,6 +50,7 @@ public class Frame extends Application{
 
 	private int stepNumber = 0;
 	private int moveToNumber = 0;
+	private int lifeRule =3;
 	@Override
 	public void start(Stage stage) throws Exception {
 		stage = new Stage();
@@ -59,26 +60,25 @@ public class Frame extends Application{
 		Canvas canvas = new Canvas((size*scale)+size, (size*scale)+size);
 		GraphicsContext gc = canvas.getGraphicsContext2D();
 		gc.setFill(Color.WHITE);
-		canvas.setOnMouseClicked(e->{
-			int x = (int) e.getX();
-			int y = (int) e.getY();
-			x = x-translatedX;
-			y=y-translatedY;
-			System.out.println(x+" "+y);
-			for(Cells inLstCells : lstCells){
-				if(x-inLstCells.getCoordX() >= 0 && x-inLstCells.getCoordX()<= scale && y-inLstCells.getCoordY()>=0 && y-inLstCells.getCoordY()<=scale){
-					if(inLstCells.isAlive()){
-						gc.setFill(Color.BLACK);
-						gc.fillRect(inLstCells.getCoordX(), inLstCells.getCoordY(), scale, scale);
-						inLstCells.setAlive(false);
-					}
-					else{
-						gc.setFill(Color.WHITE);
-						gc.fillRect(inLstCells.getCoordX(), inLstCells.getCoordY(), scale, scale);
-						inLstCells.setAlive(true);
+		canvas.setOnMousePressed(e->{
+				int x = (int) e.getX();
+				int y = (int) e.getY();
+				x = x-translatedX;
+				y=y-translatedY;
+				for(Cells inLstCells : lstCells){
+					if(x-inLstCells.getCoordX() >= 0 && x-inLstCells.getCoordX()<= scale && y-inLstCells.getCoordY()>=0 && y-inLstCells.getCoordY()<=scale){
+						if(inLstCells.isAlive()){
+							gc.setFill(Color.BLACK);
+							gc.fillRect(inLstCells.getCoordX(), inLstCells.getCoordY(), scale, scale);
+							inLstCells.setAlive(false);
+						}
+						else{
+							gc.setFill(Color.WHITE);
+							gc.fillRect(inLstCells.getCoordX(), inLstCells.getCoordY(), scale, scale);
+							inLstCells.setAlive(true);
+						}
 					}
 				}
-			}
 		});
 		Pane panel = new Pane();
 
@@ -89,11 +89,31 @@ public class Frame extends Application{
 		pane.setCenter(panel);
 		VBox box = new VBox();
 		TextField field = new TextField();
+		field.setDisable(true);
+		TextField life = new TextField();
+		life.setDisable(true);
+		life.setText(String.valueOf(lifeRule));
 		Button stepBtn = new Button("Step");
 		Button resetStep = new Button("Reset Step");
 		Button moveToBtn = new Button("Move to Step");
+		life.setOnKeyReleased(e->{
+			if(life.getText().length()>1){
+				e.consume();
+				life.clear();
+			}
+			else{
+				try{
+					lifeRule = Integer.valueOf(life.getText());
+				}
+				catch(Exception e1){
+					e1.printStackTrace();
+				}
+			}
+		});
 		resetStep.setOnAction(e->{
 			stepNumber = 0;
+			currentStep.setText("Step Number : "+stepNumber);
+			currentStep.setTextFill(Color.WHITE);
 		});
 		stepBtn.setOnAction(e->{
 			step = true;
@@ -113,9 +133,13 @@ public class Frame extends Application{
 		slider.setDisable(true);
 		box.setOnMouseEntered(e->{
 			slider.setDisable(false);
+			field.setDisable(false);
+			life.setDisable(false);
 		});
 		box.setOnMouseExited(e->{
 			slider.setDisable(true);
+			field.setDisable(true);
+			life.setDisable(true);
 		});
 		slider.setOnMouseEntered(e->{
 			slider.setDisable(false);
@@ -123,7 +147,7 @@ public class Frame extends Application{
 		slider.setOnMouseExited(e->{
 			slider.setDisable(true);
 		});
-		slider.setMax(120);
+		slider.setMax(60);
 		slider.setValue(targetFrame);
 		slider.setOnMouseReleased(e->{
 			if(Math.round(slider.getValue()) == 0){
@@ -135,7 +159,7 @@ public class Frame extends Application{
 			gameSpeedSecs = 1/slider.getValue();
 			loop.setUpdate((long)(gameSpeedSecs * 1000000000L));
 		});
-		box.getChildren().addAll(targetFrameLabel,actualFrameLabel,slider,stepBtn,currentStep,resetStep,field,moveToBtn);
+		box.getChildren().addAll(targetFrameLabel,actualFrameLabel,slider,stepBtn,currentStep,resetStep,field,moveToBtn,life);
 		pane.setLeft(box);
 		pane.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
 		targetFrameLabel.setText("Target Frame : "+String.valueOf(getTargetFrame()));
@@ -213,10 +237,10 @@ public class Frame extends Application{
 						if(lstPane[i+difx][y+dify].isAlive()){
 							nbAlive++;
 						}
-						if(nbAlive>3 || nbAlive<2){
+						if(nbAlive>lifeRule || nbAlive<(lifeRule-1)){
 							alive.add(lstPane[i][y]);
 						}
-						else if(nbAlive==3){
+						else if(nbAlive==lifeRule){
 							toRez.add(lstPane[i][y]);
 						}
 					}
