@@ -392,6 +392,7 @@ public class Frame extends Application{
 			running = false;
 			Platform.exit();
 		});
+		stage.setTitle("Game Of Life");
 		stage.show();
 		loop.start();
 	}
